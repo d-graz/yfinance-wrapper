@@ -2,6 +2,8 @@ import yfinance as yf
 import subprocess
 import sys
 
+from date_manager import DateManager
+
 class DataManager:
 
     def __init__(self):
@@ -62,14 +64,47 @@ class DataManager:
                 print("Available formats are : vertical, horizontal, comma")
                 help()
 
-    def create(self,start_date=None,end_date,period=None):
+    def create(self,start_date=None,end_date=None,period=None):
         if len(self.tickers) == 0:
             print("Error : no tickers have been loaded. Please load them using 'load()' method")                
             help()
-        
+    
+    def download(self,ticker,date_span):
+        count = 1
+        for date in date_span:
+            filename = self.dir+"/"+ticker+"__part__"+str(count)+".csv"
+            data = yf.download(ticker,start=date[0],end=date[1],interval="1h",ignore_tz = False)
+            data.to_csv(filename)
+            count = count + 1
+        partial_files = []
+        string = ticker+"__part__"
+        output = subprocess.run(["ls", "-l", self.dir," |","grep",string], stdout=subprocess.PIPE, text=True)
+        output = str(output.stdout)
+        output = output.split("\n")
+        output.pop(len(output)-1)
+        output.pop(0)
+        for element in output:
+            obj = element.split(" ")
+            for i in range(len(obj)-1):
+                obj.pop(0)
+            string = obj[0]
+            partial_files.append(string)
+        filename = self.dir+"/"+ticker+".csv"
+        total_file = open(filename,"w")
+        for partial_file in partial_files:
+            partial_file_filename = self.dir+"/"+partial_file
+            partial_file_file = open(partial_file_filename,"r")
+            lines = partial_file_file.readlines()
+            total_file.writelines(lines)
+            partial_file_file.close()
+            subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
+        total_file.close()
+
 
 def help():
     print("Please visit https://github.com/d-graz/yfinance-wrapper for more information")
     sys.exit(-1)
 
-prova = DataManager()
+objDataManager = DataManager()
+objDateManager = DateManager(period="5y")
+objDataManager.download("AAPL",objDateManager.calculate_time_span())
