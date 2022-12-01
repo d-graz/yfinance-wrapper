@@ -71,15 +71,7 @@ class DateManager:
             data.append(self.first_date)
             data.append(self.last_date)
             results.append(data)
-        print("printing result for debug")
-        print(results)
-        print("done")
         return results
             
 
-#dm = DateManager(period="8d")
-#r = dm.calculate_time_span()
-#print("printing results")
-#print(r)
-#print("done")
             

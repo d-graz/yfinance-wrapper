@@ -52,7 +52,8 @@ class DataManager:
             if format == "vertical":
                 for line in lines:
                     string = line.replace("\n","")
-                    self.tickers.append(string)
+                    if string != "":
+                        self.tickers.append(string)
             elif format == "horizontal":
                 string = lines[0].replace("\n","")
                 self.tickers = string.split(" ")
@@ -75,8 +76,10 @@ class DataManager:
             dateManager = DateManager(period=period)
         else:
             dateManager = DateManager(start_date=start_date,end_date=end_date)
+        counter = 1
         for ticker in self.tickers:
             self.download(ticker,dateManager.calculate_time_span(),dateManager.interval)
+            print(str(counter)+" out of "+str(len(self.tickers))+" downloaded")
     
     def download(self,ticker,date_span,interval):
         count = 1
@@ -85,36 +88,33 @@ class DataManager:
             data = yf.download(ticker,start=date[0],end=date[1],interval=interval,ignore_tz = False)
             data.to_csv(filename)
             count = count + 1
-        if interval == "1m":
-            partial_files = []
-            string = ticker+"__part__"
-            output = subprocess.run(["ls", "-l", self.dir], stdout=subprocess.PIPE, text=True)
-            output = str(output.stdout)
-            output = output.split("\n")
-            output.pop(len(output)-1)
-            output.pop(0)
-            for element in output:
-                obj = element.split(" ")
-                for i in range(len(obj)-1):
-                    obj.pop(0)
-                if string in obj[0]:
-                    partial_files.append(obj[0])
-            filename = self.dir+"/"+ticker+".csv"
-            total_file = open(filename,"w")
-            for partial_file in partial_files:
-                partial_file_filename = self.dir+"/"+partial_file
-                partial_file_file = open(partial_file_filename,"r")
-                lines = partial_file_file.readlines()
-                total_file.writelines(lines)
-                partial_file_file.close()
-                subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
-            total_file.close()
+        partial_files = []
+        string = ticker+"__part__"
+        output = subprocess.run(["ls", "-l", self.dir], stdout=subprocess.PIPE, text=True)
+        output = str(output.stdout)
+        output = output.split("\n")
+        output.pop(len(output)-1)
+        output.pop(0)
+        for element in output:
+            obj = element.split(" ")
+            for i in range(len(obj)-1):
+                obj.pop(0)
+            if string in obj[0]:
+                partial_files.append(obj[0])
+        filename = self.dir+"/"+ticker+".csv"
+        total_file = open(filename,"w")
+        for partial_file in partial_files:
+            partial_file_filename = self.dir+"/"+partial_file
+            partial_file_file = open(partial_file_filename,"r")
+            lines = partial_file_file.readlines()
+            total_file.writelines(lines)
+            partial_file_file.close()
+            subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
+        total_file.close()
 
 
 def help():
     print("Please visit https://github.com/d-graz/yfinance-wrapper for more information")
     sys.exit(-1)
 
-objDataManager = DataManager()
-objDateManager = DateManager(period="25d")
-objDataManager.download("AAPL",objDateManager.calculate_time_span(),objDateManager.interval)
+
