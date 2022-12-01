@@ -68,37 +68,47 @@ class DataManager:
         if len(self.tickers) == 0:
             print("Error : no tickers have been loaded. Please load them using 'load()' method")                
             help()
+        if period == None and (start_date == None or end_date == None):
+            print("Error : please specify a period or a start and end date")
+            help()
+        if period != None:
+            dateManager = DateManager(period=period)
+        else:
+            dateManager = DateManager(start_date=start_date,end_date=end_date)
+        for ticker in self.tickers:
+            self.download(ticker,dateManager.calculate_time_span(),dateManager.interval)
     
-    def download(self,ticker,date_span):
+    def download(self,ticker,date_span,interval):
         count = 1
         for date in date_span:
             filename = self.dir+"/"+ticker+"__part__"+str(count)+".csv"
-            data = yf.download(ticker,start=date[0],end=date[1],interval="1h",ignore_tz = False)
+            data = yf.download(ticker,start=date[0],end=date[1],interval=interval,ignore_tz = False)
             data.to_csv(filename)
             count = count + 1
-        partial_files = []
-        string = ticker+"__part__"
-        output = subprocess.run(["ls", "-l", self.dir," |","grep",string], stdout=subprocess.PIPE, text=True)
-        output = str(output.stdout)
-        output = output.split("\n")
-        output.pop(len(output)-1)
-        output.pop(0)
-        for element in output:
-            obj = element.split(" ")
-            for i in range(len(obj)-1):
-                obj.pop(0)
-            string = obj[0]
-            partial_files.append(string)
-        filename = self.dir+"/"+ticker+".csv"
-        total_file = open(filename,"w")
-        for partial_file in partial_files:
-            partial_file_filename = self.dir+"/"+partial_file
-            partial_file_file = open(partial_file_filename,"r")
-            lines = partial_file_file.readlines()
-            total_file.writelines(lines)
-            partial_file_file.close()
-            subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
-        total_file.close()
+        if interval == "1m":
+            partial_files = []
+            string = ticker+"__part__"
+            output = subprocess.run(["ls", "-l", self.dir], stdout=subprocess.PIPE, text=True)
+            output = str(output.stdout)
+            output = output.split("\n")
+            output.pop(len(output)-1)
+            output.pop(0)
+            for element in output:
+                obj = element.split(" ")
+                for i in range(len(obj)-1):
+                    obj.pop(0)
+                if string in obj[0]:
+                    partial_files.append(obj[0])
+            filename = self.dir+"/"+ticker+".csv"
+            total_file = open(filename,"w")
+            for partial_file in partial_files:
+                partial_file_filename = self.dir+"/"+partial_file
+                partial_file_file = open(partial_file_filename,"r")
+                lines = partial_file_file.readlines()
+                total_file.writelines(lines)
+                partial_file_file.close()
+                subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
+            total_file.close()
 
 
 def help():
@@ -106,5 +116,5 @@ def help():
     sys.exit(-1)
 
 objDataManager = DataManager()
-objDateManager = DateManager(period="5y")
-objDataManager.download("AAPL",objDateManager.calculate_time_span())
+objDateManager = DateManager(period="25d")
+objDataManager.download("AAPL",objDateManager.calculate_time_span(),objDateManager.interval)
