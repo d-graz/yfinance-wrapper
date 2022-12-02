@@ -1,8 +1,8 @@
 import yfinance as yf
-import subprocess
 import sys
 
 from date_manager import DateManager
+import linux_cmd as lcmd
 
 class DataManager:
 
@@ -13,20 +13,9 @@ class DataManager:
         self.period = None
         self.db = []
         self.tickers = []
-        subprocess.run(["mkdir", "-p", self.dir], stdout=subprocess.PIPE, text=True)
-        output = subprocess.run(["ls", "-l", self.dir], stdout=subprocess.PIPE, text=True)
-        output = str(output.stdout)
-        output = output.split("\n")
-        output.pop(len(output)-1)
-        output.pop(0)
-        ar = []
+        lcmd.mkdir(self.dir)
+        output = lcmd.ls(self.dir)
         for element in output:
-            obj = element.split(" ")
-            for i in range(len(obj)-1):
-                obj.pop(0)
-            string = obj[0]
-            ar.append(string)
-        for element in ar:
             if "__part__" in element and ".csv" in element:
                 print("Download part founded (probably due to hard stop of the program).")
                 print("Unfortunately at the moment the program is not able to recovery the previos job.")
@@ -36,7 +25,6 @@ class DataManager:
             elif ".csv" in element:
                 string = element.replace(".csv","")
                 self.db.append(string)
-        print(self.db)
 
     def load(self,tickers=None,filename=None,format=None):
         self.tickers = []
@@ -77,40 +65,55 @@ class DataManager:
         else:
             dateManager = DateManager(start_date=start_date,end_date=end_date)
         counter = 1
+        time_span = dateManager.calculate_time_span()
+        print("DEBUG : printing obtained date_span")
+        print(time_span)
+        print("DEBUG ENDS")
         for ticker in self.tickers:
-            self.download(ticker,dateManager.calculate_time_span(),dateManager.interval)
+            self.download(ticker,time_span,dateManager.interval)
             print(str(counter)+" out of "+str(len(self.tickers))+" downloaded")
+            counter = counter + 1
     
     def download(self,ticker,date_span,interval):
-        count = 1
-        for date in date_span:
-            filename = self.dir+"/"+ticker+"__part__"+str(count)+".csv"
-            data = yf.download(ticker,start=date[0],end=date[1],interval=interval,ignore_tz = False)
+        if len(date_span) > 1:
+            count = 1
+            for date in date_span:
+                filename = self.dir+"/"+ticker+"__part__"+str(count)+".csv"
+                if interval == "1m" or interval == "1h":
+                    data = yf.download(ticker,start=date[0],end=date[1],interval=interval,ignore_tz = False)
+                else:
+                    data = yf.download(ticker,start=date[0],end=date[1],interval=interval)
+                data.to_csv(filename)
+                count = count + 1
+            partial_files = []
+            string = ticker+"__part__"
+            output = lcmd.ls(self.dir)
+            for element in output:
+                if string in element:
+                    partial_files.append(element)
+            final_filename = self.dir+"/"+ticker+".csv"
+            final_file = open(final_filename,"w")
+            first = True
+            for element in partial_files:
+                partial_file_filename = self.dir+"/"+element
+                partial_file = open(partial_file_filename,"r")
+                lines = partial_file.readlines()
+                if first == False:
+                    lines.pop(0)
+                else:
+                    first = False
+                final_file.writelines(lines)
+                partial_file.close()
+                lcmd.rm(file=partial_file_filename)
+            final_file.close()
+        else:
+            filename = self.dir+"/"+ticker+".csv"
+            if interval == "1m" or interval == "1h":
+                    data = yf.download(ticker,start=date_span[0][0],end=date_span[0][1],interval=interval,ignore_tz = False)
+            else:
+                data = yf.download(ticker,start=date_span[0][0],end=date_span[0][1],interval=interval)
             data.to_csv(filename)
-            count = count + 1
-        partial_files = []
-        string = ticker+"__part__"
-        output = subprocess.run(["ls", "-l", self.dir], stdout=subprocess.PIPE, text=True)
-        output = str(output.stdout)
-        output = output.split("\n")
-        output.pop(len(output)-1)
-        output.pop(0)
-        for element in output:
-            obj = element.split(" ")
-            for i in range(len(obj)-1):
-                obj.pop(0)
-            if string in obj[0]:
-                partial_files.append(obj[0])
-        filename = self.dir+"/"+ticker+".csv"
-        total_file = open(filename,"w")
-        for partial_file in partial_files:
-            partial_file_filename = self.dir+"/"+partial_file
-            partial_file_file = open(partial_file_filename,"r")
-            lines = partial_file_file.readlines()
-            total_file.writelines(lines)
-            partial_file_file.close()
-            subprocess.run(["rm", partial_file_filename], stdout=subprocess.PIPE, text=True)
-        total_file.close()
+
 
 
 def help():

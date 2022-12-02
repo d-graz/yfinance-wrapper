@@ -11,5 +11,5 @@ dataManager = DataManager()
 dataManager.load(filename="../tickers/tickers_file.txt",format="vertical")
 
 #download ticker from yahoo finance (using yfinance)
-dataManager.create(period="2y")
+dataManager.create(period="10d")
 
