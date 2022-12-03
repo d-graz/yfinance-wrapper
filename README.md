@@ -1,7 +1,7 @@
 # yfinance-wrapper
 Tool to manage .csv historic files through yfinance
 ### Legal disclaimer
-- Yahoo!, Y!Finance, and Yahoo! finance are registered trademarks of Yahoo, Inc. Please see their term of use and remember that Yahoo finance API are meat for personal use only
+- Yahoo!, Y!Finance, and Yahoo! finance are registered trademarks of Yahoo, Inc. Please see their term of use and remember that Yahoo finance API are meant for personal use only
 - yfinance library is under Apache 2.0 license
 ### Table of content
 1. [Introduction](#introduction)
