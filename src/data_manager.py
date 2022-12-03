@@ -11,7 +11,6 @@ class DataManager:
         self.start_date = None
         self.end_date = None
         self.period = None
-        self.db = []
         self.tickers = []
         lcmd.mkdir(self.dir)
         output = lcmd.ls(self.dir)
@@ -22,9 +21,6 @@ class DataManager:
                 print("Please remove them and execute again.")
                 print("TIP: you can run 'rm *__part__*' to remove all files")
                 sys.exit(-1)
-            elif ".csv" in element:
-                string = element.replace(".csv","")
-                self.db.append(string)
 
     def load(self,tickers=None,filename=None,format=None):
         self.tickers = []
@@ -66,12 +62,9 @@ class DataManager:
             dateManager = DateManager(start_date=start_date,end_date=end_date)
         counter = 1
         time_span = dateManager.calculate_time_span()
-        print("DEBUG : printing obtained date_span")
-        print(time_span)
-        print("DEBUG ENDS")
         for ticker in self.tickers:
             self.download(ticker,time_span,dateManager.interval)
-            print(str(counter)+" out of "+str(len(self.tickers))+" downloaded")
+            print(str(counter)+" out of "+str(len(self.tickers))+" downloaded -> ~ "+str(round(counter/len(self.tickers)*100,2))+"%")
             counter = counter + 1
     
     def download(self,ticker,date_span,interval):
