@@ -44,9 +44,9 @@ def create(self,start_date=None,end_date=None,period=None):
 **Note :** `period` param support a string as it follows:
 |value|simbol|info|
 |:-----:|:----:|----|
-|$1<value<30$| `d`|**Days period:** from `1d` to `30d`|
-|$1<value<12$| `mo`|**Months period:** from `1mo` to `12mo`|
-|$1<value<?$| `y`|**Years period:** from `1y`|
+|$1 < value < 30$| `d`|**Days period:** from `1d` to `30d`|
+|$1 < value < 12$| `mo`|**Months period:** from `1mo` to `12mo`|
+|$1 < value < ?$| `y`|**Years period:** from `1y`|
 
 Please see `src/main.py` for an example of usage.
 
